@@ -3,9 +3,12 @@ import { Field, Button, Box, Text, Input, Stack, Table, Dialog, Portal, VStack, 
 import { useParams, useNavigate } from "react-router-dom";
 import { appLocalDataDir } from "@tauri-apps/api/path";
 import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+//import { useTable, useSortBy } from 'react-table';
 import { RiArrowLeftLine } from "react-icons/ri";
 import { invoke } from "@tauri-apps/api/core";
+import dayjs from "dayjs";
+import TabelaCorredores from "./TabelaCorredores";
 
 async function getCorrida(corridaId: number){
     try {
@@ -111,20 +114,20 @@ function EditRun(){
 
     const graduacaoOptions = createListCollection({
         items: [
-            {label: 'BRIG', value: 'BRIG'},
-            {label: 'CEL', value: 'CEL'},
-            {label: 'TENCEL', value: 'TENCEL'},
-            {label: 'MAJ', value: 'MAJ'},
-            {label: 'CAP', value: 'CAP'},
-            {label: 'TEN', value: 'TEN'},
-            {label: 'SO', value: 'SO'},
-            {label: 'SGT1', value: 'SGT1'},
-            {label: 'SGT2', value: 'SGT2'},
-            {label: 'SGT3', value: 'SGT3'},
-            {label: 'CB', value: 'CB'},
-            {label: 'S1', value: 'S1'},
-            {label: 'S2', value: 'S2'},
-            {label: 'CV', value: 'CV'}
+            {label: 'BRIG', value: '1'},
+            {label: 'CEL', value: '2'},
+            {label: 'TENCEL', value: '3'},
+            {label: 'MAJ', value: '4'},
+            {label: 'CAP', value: '5'},
+            {label: 'TEN', value: '6'},
+            {label: 'SO', value: '7'},
+            {label: 'SGT1', value: '8'},
+            {label: 'SGT2', value: '9'},
+            {label: 'SGT3', value: '10'},
+            {label: 'CB', value: '11'},
+            {label: 'S1', value: '12'},
+            {label: 'S2', value: '13'},
+            {label: 'CV', value: '14'}
         ],
     });
 
@@ -138,77 +141,102 @@ function EditRun(){
         {value: "1", label: "M"}
     ]
 
-    // const inputCorredor = (e:React.ChangeEvent<HTMLInputElement>) => {
-    //     const value = e.target.value;
-    //     const name = e.target.name;
-    //     if(name == "graduacao"){
-    //         setCorredorFormData({
-    //             ...corredorFormData,
-    //             graduacao: value
-    //         })
-    //     }
-    //     if(name === "dataNascimento"){
-    //         console.log("Valor ao clicar: ",value);
-    //         const date = new Date(value);
-    //         date.setDate(date.getDate() + 1)
-    //         const unixTimestamp = Math.floor(date.getTime() / 1000);
-    //         console.log("Valor formatado: ",unixTimestamp);
-    //         setCorredorFormData((oldData: any) => ({
-    //             ...oldData,
-    //             dataNascimento: unixTimestamp,
-    //         }))
-    //     }
-    //     else{
-    //         setCorredorFormData((oldData) => ({
-    //             ...oldData,
-    //             [name]: value
-    //         }));
-    //     }
-    //     console.log(corredorFormData);
-    // }
+    const inputCorredor = (e:React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        const name = e.target.name;
+        if(name == "graduacao"){
+            setCorredorFormData({
+                ...corredorFormData,
+                graduacao: value
+            })
+        }
+        if(name === "dataNascimento"){
+            console.log("Valor ao clicar: ",value);
+            const date = new Date(value);
+            date.setDate(date.getDate() + 1)
+            const unixTimestamp = Math.floor(date.getTime() / 1000);
+            console.log("Valor formatado: ",unixTimestamp);
+            setCorredorFormData((oldData: any) => ({
+                ...oldData,
+                dataNascimento: unixTimestamp,
+            }))
+        }
+        else{
+            setCorredorFormData((oldData) => ({
+                ...oldData,
+                [name]: value
+            }));
+        }
+        console.log(corredorFormData);
+    }
 
-    // const submitCorredor = async () => {
-    //     try {
+    const submitCorredor = async () => {
+        try {
             
-    //     const formattedData = {
-    //         ...corredorFormData,
-    //         numeroCorredor: corrida.corredores.length + 1,
+        const formattedData = {
+            ...corredorFormData,
+            numeroCorredor: corrida.corredores.length + 1,
             
-    //     }
-    //     formattedData.tempoChegada = Number(formattedData.tempoChegada);
+        }
+        formattedData.tempoChegada = Number(formattedData.tempoChegada);
 
-    //     if(formattedData.genero){//if 1
-    //         formattedData.genero = true;
-    //     }
-    //     else{
-    //         formattedData.genero = false;
-    //     }
-    //     const responseCorredor = await invoke('create_corredor', {
-    //         nomeCorredor: formattedData.nomeCorredor,
-    //         numeroCorredor: formattedData.numeroCorredor,
-    //         dataNascimento: formattedData.dataNascimento,
-    //         graduacao: formattedData.graduacao,
-    //         statusCorrida: formattedData.statusCorrida,
-    //         genero: formattedData.genero,
-    //         tempoChegada: formattedData.tempoChegada
+        if(formattedData.genero){//if 1
+            formattedData.genero = true;
+        }
+        else{
+            formattedData.genero = false;
+        }
+        const responseCorredor = await invoke('create_corredor', {
+            nomeCorredor: formattedData.nomeCorredor,
+            numeroCorredor: formattedData.numeroCorredor,
+            dataNascimento: formattedData.dataNascimento,
+            graduacao: formattedData.graduacao,
+            statusCorrida: formattedData.statusCorrida,
+            genero: formattedData.genero,
+            tempoChegada: formattedData.tempoChegada
 
-    //     });
-    //     console.log("Here's the runner result: ", responseCorredor);
-    //     //await insertInJson(responseCorredor);
+        });
+        console.log("Here's the runner result: ", responseCorredor);
+        await insertInJson(responseCorredor);
 
-    //     } 
-    //     catch (error) {
-    //         console.error("Erro ao cadastrar corredor: ",error);
-    //     }
-    // }
+        } 
+        catch (error) {
+            console.error("Erro ao cadastrar corredor: ",error);
+        }
+    }
 
-    // const insertInJson = async (response: any) => {
+    const insertInJson = async (response: any) => {
+        // eu tenho o JSON da corrida, e do corredor que eu quero adicionar
+        // eu vou adicionar o corredor no JSON da corrida, e depois salvar o JSON da corrida
+        //corrida está como um "array"
+        //console.log("DADOS DA CORRIDA:",corrida);
+        //response está como um string (JSON), portanto preciso fazer o parse para transformar em um objeto
+        //console.log("DADOS DO CORREDOR:", JSON.parse(response));
 
-    // }
+        const corredor = JSON.parse(response);
+        const updatedCorrida = async() => {
+            const updatedCorrida = {
+                ...corrida,
+                corredores: [...corrida.corredores, corredor]
+            }
+            return updatedCorrida;
+        }
+        const updatedCorridaData = await updatedCorrida();
+        await updateRaceData(Number(id), updatedCorridaData);
+        const corridaAtualizada = await getCorrida(Number(id));
+        if(corridaAtualizada) setCorrida(corridaAtualizada);
+        //console.log("DADOS DA CORRIDA ATUALIZADOS:", updatedCorridaData);
+
+    }
 
     const print = ()=>{
         console.log(corrida);
     }
+
+
+
+
+
 
     if(!corrida){
         return <Text>Carregando...</Text>
@@ -285,7 +313,7 @@ function EditRun(){
                                             collection={graduacaoOptions} 
                                             size="sm"
                                             name="graduacao"
-                                            //onChange={inputCorredor}
+                                            onChange={inputCorredor}
                                             >
                                                 <Select.HiddenSelect />
                                                 <Select.Label>Posto/Graduação</Select.Label>
@@ -305,7 +333,7 @@ function EditRun(){
                                                 <Select.Positioner >
                                                     <Select.Content zIndex={1500}>
                                                         {graduacaoOptions.items.map((item) => (
-                                                            <Select.Item item={item} key={item.value}> {item.value} </Select.Item>
+                                                            <Select.Item item={item} key={item.value}> {item.label} </Select.Item>
                                                         ))}
                                                     </Select.Content>
                                                 </Select.Positioner>
@@ -320,7 +348,7 @@ function EditRun(){
                                                         <Input                                             
                                                         name="nomeCorredor"
                                                         value={corredorFormData.nomeCorredor}
-                                                        //onChange={inputCorredor} 
+                                                        onChange={inputCorredor} 
                                                         />
                                                 </Field.Root>
 
@@ -331,7 +359,7 @@ function EditRun(){
                                                     <RadioGroup.Root                                                         
                                                         name="genero"
                                                         value={corredorFormData.genero.toString()}
-                                                        //onChange={inputCorredor} 
+                                                        onChange={inputCorredor} 
                                                         >
                                                         <HStack gap="6">
                                                             {generoOptions.map((opt)=>(
@@ -353,7 +381,7 @@ function EditRun(){
                                                         name="dataNascimento"
                                                         value={unixToDate(Number(corredorFormData.dataNascimento))}
                                                         type="date"
-                                                        //onChange={inputCorredor} 
+                                                        onChange={inputCorredor} 
                                                         />
                                                 </Field.Root>
      
@@ -369,7 +397,7 @@ function EditRun(){
                                             position="inherit"
                                             bottom="20px"
                                             right="25px"
-                                            //onClick={submitCorredor}
+                                            onClick={submitCorredor}
                                             >Adicionar Corredor</Button>
                                         </Dialog.CloseTrigger>                            
                                     </Dialog.Footer>
@@ -383,50 +411,8 @@ function EditRun(){
                             </Dialog.Root>
                         </VStack>
 
-                    <Table.Root key={"outline"} size="sm" variant={"outline"} showColumnBorder >
-                            
-                        <Table.ColumnGroup>
-                            <Table.Column/>
-                            <Table.Column/>
-                            <Table.Column/>
-                            <Table.Column/>
-                            <Table.Column/>
-                            <Table.Column/>
-                            <Table.Column/>
-                        </Table.ColumnGroup>
-
-                        <Table.Header>
-                            <Table.Row>
-                            <Table.ColumnHeader textAlign="center">Post/Grad</Table.ColumnHeader>
-                            <Table.ColumnHeader textAlign="center">Nome do Corredor</Table.ColumnHeader>
-                            <Table.ColumnHeader textAlign="center">Gênero</Table.ColumnHeader>
-                            <Table.ColumnHeader textAlign="center">Idade</Table.ColumnHeader>
-                            <Table.ColumnHeader textAlign="center">Número</Table.ColumnHeader>
-                            <Table.ColumnHeader textAlign="center">STATUS</Table.ColumnHeader>
-                            <Table.ColumnHeader textAlign="center">TEMPO</Table.ColumnHeader>
-                            </Table.Row>
-                        </Table.Header>
-            
-                        <Table.Body>
-                            {corrida.corredores.map( (corredor:any) => (
-                                <Table.Row 
-                                key={corredor.id} 
-                                //onClick={() => {handleNavigate(corredor.id)}} 
-                                cursor="pointer"
-                                transition="background-color 0.2s ease"
-                                _hover={{bg: "gray.400"}}
-                                >
-                                    <Table.Cell textAlign="center">{corredor.graduacao}</Table.Cell>
-                                    <Table.Cell textAlign="center">{corredor.nomeCorredor}</Table.Cell>
-                                    <Table.Cell textAlign="center">{corredor.genero}</Table.Cell>
-                                    <Table.Cell textAlign="center">{unixToDate(corredor.aniversario)}</Table.Cell>
-                                    <Table.Cell textAlign="center">{corredor.numeroCorredor}</Table.Cell>
-                                    <Table.Cell textAlign="center">{corredor.statusCorrida}</Table.Cell>
-                                    <Table.Cell textAlign="center">{corredor.tempoChegada}</Table.Cell>
-                                </Table.Row>
-                            ))}
-                        </Table.Body>
-                    </Table.Root>
+                        
+                    <TabelaCorredores corredores={corrida.corredores}/>
 
 
                 </Stack>
